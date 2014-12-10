@@ -13,9 +13,48 @@ import java.io.*;
 
 class ProductExtractor extends Thread
 {
+	public String url;
+
+	public static void main(String args[])
+	{
+		Document productsGridPage = ProductExtractor.getDepHTML(args[0]);
+		List<String> productsURLs = ProductExtractor.listProductURL(productsGridPage);
+
+		for (String url : productsURLs)
+		{
+			Thread prodEx = new ProductExtractor(url);
+			prodEx.start();
+		}
+	}
+
+	public ProductExtractor(String url)
+	{
+		this.url  = url;
+	}
 	public void run()
 	{
+		Document productPage = this.getHTML("http://www.tesco.com" + this.url);
+		String completeProductDescription = "";
+		completeProductDescription += this.extractProductName(productPage) + " ";
+		completeProductDescription += this.extractProductPrice(productPage) + "\n";
+		completeProductDescription += this.extractNutritionInfo(productPage) + "\n";
+		this.printResult(completeProductDescription);
+	}
 
+	public synchronized void printResult(String txt)
+	{
+		System.out.println(txt);
+	}
+
+
+	/*public void run()
+	{
+		Document productPage = prodEx.getHTML("http://www.tesco.com" + url);
+		String completeProductDescription = "";
+		completeProductDescription += prodEx.extractProductName(productPage) + " ";
+		completeProductDescription += prodEx.extractProductPrice(productPage) + "\n";
+		completeProductDescription += prodEx.extractNutritionInfo(productPage) + "\n\n";
+		prodEx.writeTo(file, completeProductDescription);
 	}
 
 	public static void main(String[] args)
@@ -36,12 +75,8 @@ class ProductExtractor extends Thread
 
 			for (String url : productsURLs)
 			{
-				Document productPage = prodEx.getHTML("http://www.tesco.com" + url);
-				String completeProductDescription = "";
-				completeProductDescription += prodEx.extractProductName(productPage) + " ";
-				completeProductDescription += prodEx.extractProductPrice(productPage) + "\n";
-				completeProductDescription += prodEx.extractNutritionInfo(productPage) + "\n\n";
-				prodEx.writeTo(file, completeProductDescription);
+				Thread t = new ProductExtractor();
+				t.start();
 			}
 		}
 		catch (IOException ioe)
@@ -64,7 +99,7 @@ class ProductExtractor extends Thread
 		{
 			ioe.printStackTrace();
 		}
-	}
+	}*/
 
 	private String extractProductName(Document html)
 	{
@@ -89,7 +124,7 @@ class ProductExtractor extends Thread
 		return ppi + " " + ppu;
 	}
 
-	private List<String> listProductURL(Document html)
+	private static List<String> listProductURL(Document html)
 	{
 		List<String> urls = new ArrayList<String>();
 		Elements productsGrid = html.select("div.productLists ul.products.grid li");
@@ -103,6 +138,47 @@ class ProductExtractor extends Thread
 	}
 
 	public Document getHTML(String url)
+	{
+		URL obj;
+		HttpURLConnection conn;
+		int responseCode;
+		BufferedReader inBuff;
+		String inputLine;
+		StringBuffer response;
+
+		try
+		{
+			obj = new URL(url);
+			conn = (HttpURLConnection)obj.openConnection();
+			conn.setRequestMethod("GET");
+			conn.setRequestProperty("User-Agent", "Mozilla/5.0");
+			responseCode = conn.getResponseCode();
+
+			inBuff = new BufferedReader(new InputStreamReader(conn.getInputStream()));
+	
+			response = new StringBuffer();
+
+			while ((inputLine = inBuff.readLine()) != null)
+			{
+				response.append(inputLine);
+			}
+			inBuff.close();
+		}
+		catch (MalformedURLException mal)
+		{
+			return null;
+		}
+		catch (IOException ioe)
+		{
+			return null;
+		}
+
+
+		Document html = Jsoup.parse(response.toString());
+		return html;
+	}
+
+	public static Document getDepHTML(String url)
 	{
 		URL obj;
 		HttpURLConnection conn;
