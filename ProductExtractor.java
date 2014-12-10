@@ -14,55 +14,12 @@ import java.io.*;
 class ProductExtractor extends Thread
 {
 	public String url;
+	public FileWriter fw;
 
 	public static void main(String args[])
 	{
-		Document productsGridPage = ProductExtractor.getDepHTML(args[0]);
+		Document productsGridPage = ProductExtractor.getDepHTML(args[1]);
 		List<String> productsURLs = ProductExtractor.listProductURL(productsGridPage);
-
-		for (String url : productsURLs)
-		{
-			Thread prodEx = new ProductExtractor(url);
-			prodEx.start();
-		}
-	}
-
-	public ProductExtractor(String url)
-	{
-		this.url  = url;
-	}
-	public void run()
-	{
-		Document productPage = this.getHTML("http://www.tesco.com" + this.url);
-		String completeProductDescription = "";
-		completeProductDescription += this.extractProductName(productPage) + " ";
-		completeProductDescription += this.extractProductPrice(productPage) + "\n";
-		completeProductDescription += this.extractNutritionInfo(productPage) + "\n";
-		this.printResult(completeProductDescription);
-	}
-
-	public synchronized void printResult(String txt)
-	{
-		System.out.println(txt);
-	}
-
-
-	/*public void run()
-	{
-		Document productPage = prodEx.getHTML("http://www.tesco.com" + url);
-		String completeProductDescription = "";
-		completeProductDescription += prodEx.extractProductName(productPage) + " ";
-		completeProductDescription += prodEx.extractProductPrice(productPage) + "\n";
-		completeProductDescription += prodEx.extractNutritionInfo(productPage) + "\n\n";
-		prodEx.writeTo(file, completeProductDescription);
-	}
-
-	public static void main(String[] args)
-	{
-		ProductExtractor prodEx = new ProductExtractor();
-
-		Document productsGridPage = prodEx.getHTML(args[1]);
-		List<String> productsURLs = prodEx.listProductURL(productsGridPage);
 
 		try
 		{
@@ -71,35 +28,53 @@ class ProductExtractor extends Thread
 			// if file doesnt exists, then create it
 			if (!file.exists()) {
 				file.createNewFile();
-			}			
-
-			for (String url : productsURLs)
-			{
-				Thread t = new ProductExtractor();
-				t.start();
 			}
+			FileWriter fw = new FileWriter(file.getAbsoluteFile(), true);
+
+		for (String url : productsURLs)
+		{
+			Thread prodEx = new ProductExtractor(url, fw);
+			prodEx.start();
+		}
 		}
 		catch (IOException ioe)
 		{
 			ioe.printStackTrace();
 		}
-		System.out.println("Done!");
 	}
 
-	public synchronized void writeTo(File f, String productDescr)
+	public ProductExtractor(String url, FileWriter fw)
+	{
+		this.url = url;
+		this.fw = fw;
+	}
+
+	public void run()
+	{
+		Document productPage = this.getHTML("http://www.tesco.com" + this.url);
+		String completeProductDescription = "";
+		completeProductDescription += this.extractProductName(productPage) + " ";
+		completeProductDescription += this.extractProductPrice(productPage) + "\n";
+		completeProductDescription += this.extractNutritionInfo(productPage) + "\n";
+		this.writeTo(this.fw, completeProductDescription);
+	}
+
+	public synchronized void printResult(String txt)
+	{
+		System.out.println(txt);
+	}
+
+	public synchronized void writeTo(FileWriter fw, String productDescr)
 	{
 		try
 		{
-			FileWriter fw = new FileWriter(f.getAbsoluteFile(), true);
-			BufferedWriter bw = new BufferedWriter(fw);
-			bw.write(productDescr);
-			bw.close();
+			fw.write(productDescr);
 		}
 		catch (IOException ioe)
 		{
 			ioe.printStackTrace();
 		}
-	}*/
+	}
 
 	private String extractProductName(Document html)
 	{
