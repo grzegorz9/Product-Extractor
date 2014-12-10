@@ -11,8 +11,13 @@ import org.jsoup.nodes.Element;
 
 import java.io.*;
 
-class ProductExtractor
+class ProductExtractor extends Thread
 {
+	public void run()
+	{
+
+	}
+
 	public static void main(String[] args)
 	{
 		ProductExtractor prodEx = new ProductExtractor();
@@ -27,29 +32,38 @@ class ProductExtractor
 			// if file doesnt exists, then create it
 			if (!file.exists()) {
 				file.createNewFile();
-			}
-
-			FileWriter fw = new FileWriter(file.getAbsoluteFile(), true);
-			BufferedWriter bw = new BufferedWriter(fw);
-			String completeProductDescription;
+			}			
 
 			for (String url : productsURLs)
 			{
 				Document productPage = prodEx.getHTML("http://www.tesco.com" + url);
-				completeProductDescription = "";
+				String completeProductDescription = "";
 				completeProductDescription += prodEx.extractProductName(productPage) + " ";
 				completeProductDescription += prodEx.extractProductPrice(productPage) + "\n";
 				completeProductDescription += prodEx.extractNutritionInfo(productPage) + "\n\n";
-				bw.write(completeProductDescription);
+				prodEx.writeTo(file, completeProductDescription);
 			}
-
-			bw.close();
 		}
 		catch (IOException ioe)
 		{
 			ioe.printStackTrace();
 		}
 		System.out.println("Done!");
+	}
+
+	public synchronized void writeTo(File f, String productDescr)
+	{
+		try
+		{
+			FileWriter fw = new FileWriter(f.getAbsoluteFile(), true);
+			BufferedWriter bw = new BufferedWriter(fw);
+			bw.write(productDescr);
+			bw.close();
+		}
+		catch (IOException ioe)
+		{
+			ioe.printStackTrace();
+		}
 	}
 
 	private String extractProductName(Document html)
