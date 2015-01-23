@@ -14,6 +14,21 @@ class TescoGroceries
 	public static void main(String[] args)
 	{
 		TescoGroceries tesco = new TescoGroceries();
+		BufferedWriter bw = null;
+
+		try
+		{
+			File f = new File("products.txt");
+            if (!f.exists())
+            {
+                f.createNewFile();
+            }
+            bw = new BufferedWriter(new FileWriter("products.txt", true));
+        }
+        catch (IOException ioe)
+        {
+        	ioe.printStackTrace();
+        }
 
 		String rootURL = "http://www.tesco.com/groceries";
 		Document doc = tesco.getHTML(rootURL);
@@ -30,9 +45,29 @@ class TescoGroceries
 				List <Product> products = ds.extractProducts(departmentRootPage);
 				System.out.println("Got " + products.size() + " products");
 
-				Product test = products.get(2);
-				System.out.println("Product test\n" + test.name + "\n" + test.url + "\n");
+				for (Product p : products)
+				{
+					try
+					{
+                		bw.write(p.url + System.lineSeparator());
+                	}
+                	catch (IOException ioe)
+                	{
+                		ioe.printStackTrace();
+                	}
+				}
+
+				//Product test = products.get(2);
+				//System.out.println("Product test\n" + test.name + "\n" + test.url + "\n");
 			}
+		}
+		try
+		{
+	        bw.close();
+		}
+		catch (IOException ioe)
+		{
+			ioe.printStackTrace();
 		}
 	}
 
